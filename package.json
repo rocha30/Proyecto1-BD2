@@ -1,0 +1,14 @@
+{
+  "name": "proyecto1-bd2",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Monorepo: backend API + frontend Vite",
+  "scripts": {
+    "install:backend": "npm install --prefix backend",
+    "install:frontend": "npm install --prefix frontend",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build:frontend": "npm --prefix frontend run build",
+    "preview:frontend": "npm --prefix frontend run preview"
+  }
+}

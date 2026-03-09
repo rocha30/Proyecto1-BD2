@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cisco UI | Vite Frontend</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="backdrop"></div>
+    <header class="hero reveal" style="--delay: 0.05s">
+      <p class="kicker">Proyecto BD2</p>
+      <h1>Cisco Layer: API + Frontend + Integration</h1>
+      <p>Frontend Vite modular consumiendo endpoints reales.</p>
+    </header>
+
+    <nav class="tabs reveal" style="--delay: 0.1s">
+      <button class="tab active" data-view="dashboard">Dashboard</button>
+      <button class="tab" data-view="search">Search Restaurants</button>
+      <button class="tab" data-view="orders">Create Order</button>
+      <button class="tab" data-view="history">Order History</button>
+      <button class="tab" data-view="reviews">Reviews</button>
+    </nav>
+
+    <main>
+      <section id="dashboard" class="view active reveal" style="--delay: 0.15s">
+        <div class="card-grid stats-grid">
+          <article class="stat-card">
+            <h3>Users</h3>
+            <p id="stat-users">-</p>
+          </article>
+          <article class="stat-card">
+            <h3>Restaurants</h3>
+            <p id="stat-restaurants">-</p>
+          </article>
+          <article class="stat-card">
+            <h3>Orders</h3>
+            <p id="stat-orders">-</p>
+          </article>
+          <article class="stat-card">
+            <h3>Reviews</h3>
+            <p id="stat-reviews">-</p>
+          </article>
+        </div>
+
+        <div class="card-grid">
+          <article class="panel">
+            <h3>Orders By Status (Aggregation)</h3>
+            <div id="orders-status-chart" class="chart-list"></div>
+          </article>
+          <article class="panel">
+            <h3>Top Restaurants (Aggregation)</h3>
+            <div id="top-restaurants-list" class="stack"></div>
+          </article>
+          <article class="panel">
+            <h3>Top Dishes (Aggregation)</h3>
+            <div id="top-dishes-list" class="stack"></div>
+          </article>
+          <article class="panel">
+            <h3>Monthly Sales (Aggregation)</h3>
+            <div id="monthly-sales-list" class="stack"></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="search" class="view reveal" style="--delay: 0.2s">
+        <article class="panel">
+          <h3>Restaurant Query Controls</h3>
+          <form id="search-form" class="form-grid">
+            <label>
+              Query
+              <input name="q" placeholder="name or category" />
+            </label>
+            <label>
+              Category
+              <input name="tipo_comida" placeholder="Mexicana" />
+            </label>
+            <label>
+              Min Rating
+              <input type="number" step="0.1" min="0" max="5" name="rating_gte" />
+            </label>
+            <label>
+              Sort
+              <select name="sort">
+                <option value="rating">rating</option>
+                <option value="name">name</option>
+                <option value="createdAt">createdAt</option>
+              </select>
+            </label>
+            <label>
+              Order
+              <select name="order">
+                <option value="desc">desc</option>
+                <option value="asc">asc</option>
+              </select>
+            </label>
+            <label>
+              Limit
+              <input type="number" min="1" max="50" name="limit" value="10" />
+            </label>
+            <button type="submit" class="primary">Run Query</button>
+          </form>
+        </article>
+        <div id="search-results" class="card-grid"></div>
+      </section>
+
+      <section id="orders" class="view reveal" style="--delay: 0.25s">
+        <article class="panel">
+          <h3>Create Order</h3>
+          <form id="order-form" class="form-grid">
+            <label>
+              User
+              <select id="order-user" required></select>
+            </label>
+            <label>
+              Restaurant
+              <select id="order-restaurant" required></select>
+            </label>
+            <label>
+              Item Name
+              <input id="item-name" required placeholder="Dish name" />
+            </label>
+            <label>
+              Price
+              <input id="item-price" type="number" step="0.01" min="0" required />
+            </label>
+            <label>
+              Quantity
+              <input id="item-qty" type="number" min="1" value="1" required />
+            </label>
+            <button id="add-item-btn" type="button">Add Item</button>
+            <button type="submit" class="primary">Submit Order</button>
+          </form>
+          <div class="panel-sub">
+            <h4>Items</h4>
+            <ul id="order-items"></ul>
+          </div>
+          <p id="order-message" class="message"></p>
+        </article>
+      </section>
+
+      <section id="history" class="view reveal" style="--delay: 0.3s">
+        <article class="panel">
+          <h3>Order History + Status Flows</h3>
+          <form id="history-form" class="inline-form">
+            <label>
+              User
+              <select id="history-user"></select>
+            </label>
+            <button class="primary" type="submit">Load History</button>
+          </form>
+          <div id="history-list" class="stack"></div>
+        </article>
+      </section>
+
+      <section id="reviews" class="view reveal" style="--delay: 0.35s">
+        <article class="panel">
+          <h3>Create Review</h3>
+          <form id="review-form" class="form-grid">
+            <label>
+              User
+              <select id="review-user" required></select>
+            </label>
+            <label>
+              Restaurant
+              <select id="review-restaurant" required></select>
+            </label>
+            <label>
+              Rating
+              <input id="review-rating" type="number" min="1" max="5" value="5" required />
+            </label>
+            <label class="wide">
+              Comment
+              <textarea id="review-comment" rows="3" placeholder="Write a review"></textarea>
+            </label>
+            <button class="primary" type="submit">Submit Review</button>
+          </form>
+          <p id="review-message" class="message"></p>
+        </article>
+        <article class="panel">
+          <h3>Recent Reviews ($lookup)</h3>
+          <div id="reviews-list" class="stack"></div>
+        </article>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
