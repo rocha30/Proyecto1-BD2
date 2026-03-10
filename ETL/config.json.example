@@ -1,0 +1,61 @@
+{
+  "mongodb": {
+    "uri": "mongodb+srv://TU_USUARIO:TU_PASSWORD@cluster0.xxxxx.mongodb.net/TU_DATABASE",
+    "database": "TU_DATABASE"
+  },
+  "postgresql": {
+    "host": "localhost o tu_host_remoto",
+    "port": 5432,
+    "database": "restaurant_analytics",
+    "user": "tu_usuario",
+    "password": "tu_password"
+  },
+  "etl_jobs": [
+    {
+      "name": "restaurant_performance",
+      "enabled": true,
+      "source_collection": "restaurants",
+      "target_table": "dim_restaurants",
+      "aggregate_pipeline": [
+        {
+          "$lookup": {
+            "from": "reviews",
+            "localField": "_id",
+            "foreignField": "restaurantId",
+            "as": "reviews"
+          }
+        },
+        {
+          "$project": {
+            "restaurant_id": { "$toString": "$_id" },
+            "name": 1,
+            "cuisine": 1,
+            "address": 1,
+            "total_reviews": { "$size": "$reviews" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "orders_fact",
+      "enabled": true,
+      "source_collection": "orders",
+      "target_table": "fact_orders",
+      "aggregate_pipeline": []
+    },
+    {
+      "name": "reviews_fact",
+      "enabled": true,
+      "source_collection": "reviews",
+      "target_table": "fact_reviews",
+      "aggregate_pipeline": []
+    },
+    {
+      "name": "users_dimension",
+      "enabled": true,
+      "source_collection": "users",
+      "target_table": "dim_users",
+      "aggregate_pipeline": []
+    }
+  ]
+}
