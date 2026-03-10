@@ -2,7 +2,30 @@ import { api } from "../api/client";
 import { buildQueryString } from "../utils/dom";
 import { escapeHtml } from "../utils/format";
 
-export async function runRestaurantSearch(queryString = "limit=10&sort=rating&order=desc") {
+async function loadCategoryOptions() {
+  const categorySelect = document.getElementById("search-category");
+  if (!categorySelect) {
+    return;
+  }
+
+  const defaultOption = `<option value="">Todas</option>`;
+
+  try {
+    const response = await api("/analytics/distinct-food-types");
+    const categories = (response.data || [])
+      .filter((category) => category !== null && category !== undefined && String(category).trim() !== "")
+      .map((category) => String(category))
+      .sort((a, b) => a.localeCompare(b));
+
+    categorySelect.innerHTML = `${defaultOption}${categories
+      .map((category) => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`)
+      .join("")}`;
+  } catch (_error) {
+    categorySelect.innerHTML = defaultOption;
+  }
+}
+
+export async function runRestaurantSearch(queryString = "sort=rating&order=desc") {
   const response = await api(`/restaurants?${queryString}`);
   const container = document.getElementById("search-results");
 
@@ -27,6 +50,8 @@ export async function runRestaurantSearch(queryString = "limit=10&sort=rating&or
 
 export function setupRestaurantSearch() {
   const form = document.getElementById("search-form");
+  void loadCategoryOptions();
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     try {

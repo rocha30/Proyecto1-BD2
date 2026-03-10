@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cisco UI | Vite Frontend</title>
+    <title>Proyecto1</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -14,17 +14,17 @@
   <body>
     <div class="backdrop"></div>
     <header class="hero reveal" style="--delay: 0.05s">
-      <p class="kicker">Proyecto BD2</p>
-      <h1>Cisco Layer: API + Frontend + Integration</h1>
-      <p>Frontend Vite modular consumiendo endpoints reales.</p>
+      <p class="kicker"> T2C</p>
+      <h1>Tiendas to Casas</h1>
+      <p>Bienvenido a la aplicación de Tiendas to Casas, pide la comida de tu restaurante favorito</p>
     </header>
 
     <nav class="tabs reveal" style="--delay: 0.1s">
       <button class="tab active" data-view="dashboard">Dashboard</button>
-      <button class="tab" data-view="search">Search Restaurants</button>
-      <button class="tab" data-view="orders">Create Order</button>
-      <button class="tab" data-view="history">Order History</button>
-      <button class="tab" data-view="reviews">Reviews</button>
+      <button class="tab" data-view="search">Restaurantes</button>
+      <button class="tab" data-view="orders">Crear Orden</button>
+      <button class="tab" data-view="history">Historial de Órdenes</button>
+      <button class="tab" data-view="reviews">Reseñas</button>
     </nav>
 
     <main>
@@ -50,19 +50,19 @@
 
         <div class="card-grid">
           <article class="panel">
-            <h3>Orders By Status (Aggregation)</h3>
+            <h3>Ordenes (Aggregation)</h3>
             <div id="orders-status-chart" class="chart-list"></div>
           </article>
           <article class="panel">
-            <h3>Top Restaurants (Aggregation)</h3>
+            <h3>Restaurantes Top (Aggregation)</h3>
             <div id="top-restaurants-list" class="stack"></div>
           </article>
           <article class="panel">
-            <h3>Top Dishes (Aggregation)</h3>
+            <h3>Platos Top (Aggregation)</h3>
             <div id="top-dishes-list" class="stack"></div>
           </article>
           <article class="panel">
-            <h3>Monthly Sales (Aggregation)</h3>
+            <h3>Ventas Mensuales (Aggregation)</h3>
             <div id="monthly-sales-list" class="stack"></div>
           </article>
         </div>
@@ -70,40 +70,42 @@
 
       <section id="search" class="view reveal" style="--delay: 0.2s">
         <article class="panel">
-          <h3>Restaurant Query Controls</h3>
-          <form id="search-form" class="form-grid">
-            <label>
-              Query
-              <input name="q" placeholder="name or category" />
+          <h3>Buscar Restaurantes</h3>
+          <form id="search-form" class="form-grid search-form">
+            <label class="search-field search-query-field">
+              Nombre
+              <input name="q" placeholder="nombre" />
             </label>
-            <label>
-              Category
-              <input name="tipo_comida" placeholder="Mexicana" />
+            <label class="search-field search-category-field">
+              Categoría 
+              <select id="search-category" name="tipo_comida">
+                <option value="">Todas las categorías</option>
+              </select>
             </label>
-            <label>
+            <label class="search-field search-rating-field">
               Min Rating
               <input type="number" step="0.1" min="0" max="5" name="rating_gte" />
             </label>
-            <label>
-              Sort
+            <label class="search-field search-sort-field">
+              Búsqueda por
               <select name="sort">
                 <option value="rating">rating</option>
                 <option value="name">name</option>
                 <option value="createdAt">createdAt</option>
               </select>
             </label>
-            <label>
-              Order
+            <label class="search-field search-order-field">
+              Orden
               <select name="order">
                 <option value="desc">desc</option>
                 <option value="asc">asc</option>
               </select>
             </label>
-            <label>
+            <label class="search-field search-limit-field">
               Limit
-              <input type="number" min="1" max="50" name="limit" value="10" />
+              <input type="number" min="1" name="Cantidad" placeholder="Cantidad" />
             </label>
-            <button type="submit" class="primary">Run Query</button>
+            <button type="submit" class="primary search-submit">Buscar</button>
           </form>
         </article>
         <div id="search-results" class="card-grid"></div>
@@ -111,34 +113,43 @@
 
       <section id="orders" class="view reveal" style="--delay: 0.25s">
         <article class="panel">
-          <h3>Create Order</h3>
-          <form id="order-form" class="form-grid">
-            <label>
-              User
+          <h3>Crear Orden</h3>
+          <form id="order-form" class="form-grid order-form" novalidate>
+            <label class="order-user-field">
+              Usuario
               <select id="order-user" required></select>
             </label>
-            <label>
-              Restaurant
+            <label class="order-restaurant-field">
+              Restaurante
               <select id="order-restaurant" required></select>
             </label>
-            <label>
-              Item Name
-              <input id="item-name" required placeholder="Dish name" />
+            <label class="order-item-field">
+              Nombre del item
+              <select id="item-name">
+                <option value="">Selecciona un restaurante primero</option>
+              </select>
             </label>
-            <label>
-              Price
-              <input id="item-price" type="number" step="0.01" min="0" required />
+            <label class="order-price-field">
+              Precio
+              <input id="item-price" type="number" step="0.01" min="0" />
             </label>
-            <label>
-              Quantity
-              <input id="item-qty" type="number" min="1" value="1" required />
+            <label class="order-qty-field">
+              Cantidad
+              <input id="item-qty" type="number" min="1" value="1" />
             </label>
-            <button id="add-item-btn" type="button">Add Item</button>
-            <button type="submit" class="primary">Submit Order</button>
+            <div class="order-actions">
+              <button id="add-item-btn" type="button">Agregar Item</button>
+              <button type="submit" class="primary">Crear Orden</button>
+              <button id="order-cancel-btn" type="button">Cancelar</button>
+            </div>
           </form>
-          <div class="panel-sub">
+          <div class="panel-sub order-items-panel">
             <h4>Items</h4>
             <ul id="order-items"></ul>
+            <div class="order-items-total-row">
+              <span>Total</span>
+              <strong id="order-items-total">$0.00</strong>
+            </div>
           </div>
           <p id="order-message" class="message"></p>
         </article>
@@ -146,44 +157,44 @@
 
       <section id="history" class="view reveal" style="--delay: 0.3s">
         <article class="panel">
-          <h3>Order History + Status Flows</h3>
+          <h3>Historial de Ordenes</h3>
           <form id="history-form" class="inline-form">
-            <label>
+            <label class="review-user-field">
               User
               <select id="history-user"></select>
             </label>
-            <button class="primary" type="submit">Load History</button>
+            <button class="primary" type="submit">Cargar Historial</button>
           </form>
           <div id="history-list" class="stack"></div>
         </article>
       </section>
 
-      <section id="reviews" class="view reveal" style="--delay: 0.35s">
+      <section id="reviews" class="view reveal reviews-view" style="--delay: 0.35s">
         <article class="panel">
-          <h3>Create Review</h3>
-          <form id="review-form" class="form-grid">
-            <label>
-              User
+          <h3>Crear Reseña</h3>
+          <form id="review-form" class="form-grid review-form">
+            <label class="review-user-field">
+              Usuario
               <select id="review-user" required></select>
             </label>
-            <label>
-              Restaurant
+            <label class="review-restaurant-field">
+              Restaurante
               <select id="review-restaurant" required></select>
             </label>
-            <label>
+            <label class="review-rating-field">
               Rating
               <input id="review-rating" type="number" min="1" max="5" value="5" required />
             </label>
-            <label class="wide">
-              Comment
-              <textarea id="review-comment" rows="3" placeholder="Write a review"></textarea>
+            <label class="wide review-comment-field">
+              Comentario
+              <textarea id="review-comment" rows="3" placeholder="Escribe tu reseña"></textarea>
             </label>
-            <button class="primary" type="submit">Submit Review</button>
+            <button class="primary review-submit" type="submit">Agregar reseña</button>
           </form>
           <p id="review-message" class="message"></p>
         </article>
         <article class="panel">
-          <h3>Recent Reviews ($lookup)</h3>
+          <h3>View Reviews</h3>
           <div id="reviews-list" class="stack"></div>
         </article>
       </section>

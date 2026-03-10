@@ -2,6 +2,15 @@ import { api } from "../api/client";
 import { escapeHtml, formatCurrency, formatDate } from "../utils/format";
 
 const statusValues = ["pending", "confirmed", "preparing", "dispatched", "delivered", "cancelled"];
+const nonCancellableStatuses = new Set(["dispatched", "delivered", "cancelled"]);
+
+function canCancelOrder(status) {
+  return !nonCancellableStatuses.has(status);
+}
+
+function canChangeOrderStatus(status) {
+  return status !== "cancelled";
+}
 
 export async function loadOrderHistory() {
   const userId = document.getElementById("history-user").value;
@@ -22,6 +31,8 @@ export async function loadOrderHistory() {
       const statusOptions = statusValues
         .map((status) => `<option value="${status}" ${status === order.status ? "selected" : ""}>${status}</option>`)
         .join("");
+      const canCancel = canCancelOrder(order.status);
+      const canUpdateStatus = canChangeOrderStatus(order.status);
 
       return `
       <article class="history-item">
@@ -33,11 +44,11 @@ export async function loadOrderHistory() {
             <div class="small">id ${order._id}</div>
           </div>
           <div class="history-controls">
-            <select data-status-select="${order._id}">
+            <select data-status-select="${order._id}" ${canUpdateStatus ? "" : "disabled"}>
               ${statusOptions}
             </select>
-            <button type="button" data-update-status="${order._id}">Update</button>
-            <button type="button" data-cancel-order="${order._id}">Cancel</button>
+            <button type="button" data-update-status="${order._id}" ${canUpdateStatus ? "" : "disabled"}>Update</button>
+            <button type="button" data-cancel-order="${order._id}" ${canCancel ? "" : "disabled"}>Cancel</button>
           </div>
         </div>
       </article>

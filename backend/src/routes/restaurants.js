@@ -12,7 +12,11 @@ router.get(
   "/",
   asyncHandler(async (req, res) => {
     const restaurantsCollection = getCollection("Restaurant");
-    const { filter, options } = buildFindConfig(req.query, { rating: -1 });
+    const { filter, options } = buildFindConfig(
+      req.query,
+      { rating: -1 },
+      { limitFallback: undefined, limitMax: null }
+    );
 
     if (req.query.q) {
       filter.$or = [
@@ -31,7 +35,7 @@ router.get(
       meta: {
         total,
         skip: options.skip,
-        limit: options.limit
+        limit: options.limit ?? null
       }
     });
   })

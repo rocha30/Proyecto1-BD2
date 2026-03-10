@@ -154,6 +154,226 @@ main {
   margin-bottom: 1rem;
 }
 
+.search-form {
+  grid-template-columns: minmax(170px, 2fr) minmax(140px, 1.4fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(110px, 0.9fr) auto;
+  gap: 0.8rem;
+  align-items: end;
+}
+
+.search-form .search-submit {
+  justify-self: end;
+  align-self: end;
+  padding: 0.72rem 1.3rem;
+  min-height: 44px;
+  min-width: 150px;
+  border-radius: 14px;
+  box-shadow: 0 12px 26px rgba(15, 118, 110, 0.26);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+}
+
+.search-form .search-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 30px rgba(15, 118, 110, 0.3);
+  filter: saturate(1.06);
+}
+
+.search-form .search-submit:active {
+  transform: translateY(0);
+}
+
+.search-form .search-limit-field {
+  max-width: 120px;
+  justify-self: start;
+}
+
+.search-form .search-limit-field input {
+  width: 100%;
+}
+
+.order-form {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 0.85rem;
+  align-items: end;
+}
+
+.order-form .order-user-field {
+  grid-column: span 3;
+}
+
+.order-form .order-restaurant-field {
+  grid-column: span 3;
+}
+
+.order-form .order-item-field {
+  grid-column: span 4;
+}
+
+.order-form .order-price-field,
+.order-form .order-qty-field {
+  grid-column: span 1;
+}
+
+.order-form .order-user-field select,
+.order-form .order-restaurant-field select,
+.order-form .order-item-field input,
+.order-form .order-price-field input,
+.order-form .order-qty-field input {
+  width: 100%;
+}
+
+.order-form .order-item-field select {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid rgba(10, 41, 74, 0.28);
+  border-radius: 0;
+  background: transparent;
+  padding-left: 0;
+  padding-right: 1.4rem;
+}
+
+.order-form .order-item-field select:focus {
+  outline: none;
+  border-bottom-color: var(--brand);
+}
+
+.order-form .order-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  margin-top: 0.1rem;
+}
+
+.order-form .order-actions button {
+  min-height: 44px;
+  min-width: 145px;
+  border-radius: 14px;
+}
+
+#add-item-btn {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--line);
+  transition: background-color 0.16s ease, transform 0.16s ease;
+}
+
+#add-item-btn:hover {
+  background: #fff;
+  transform: translateY(-1px);
+}
+
+#order-cancel-btn {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.32);
+  color: #991b1b;
+  transition: background-color 0.16s ease, transform 0.16s ease;
+}
+
+#order-cancel-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  transform: translateY(-1px);
+}
+
+.order-items-panel {
+  margin-top: 0.2rem;
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.8), rgba(241, 245, 249, 0.72));
+}
+
+.order-items-panel h4 {
+  margin-bottom: 0.6rem;
+}
+
+.order-items-total-row {
+  margin-top: 0.65rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid rgba(10, 41, 74, 0.16);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.reviews-view {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  align-items: start;
+}
+
+.review-form {
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 0.8rem;
+  align-items: end;
+}
+
+.review-form .review-user-field,
+.review-form .review-restaurant-field {
+  grid-column: span 3;
+}
+
+.review-form .review-rating-field {
+  grid-column: span 2;
+}
+
+.review-form .review-user-field select,
+.review-form .review-restaurant-field select,
+.review-form .review-rating-field input,
+.review-form textarea {
+  width: 100%;
+}
+
+.review-form .review-submit {
+  grid-column: 1 / -1;
+  justify-self: end;
+  min-width: 170px;
+  min-height: 44px;
+  border-radius: 14px;
+}
+
+@media (max-width: 980px) {
+  .search-form {
+    grid-template-columns: repeat(3, minmax(160px, 1fr));
+  }
+
+  .search-form .search-submit {
+    grid-column: 3;
+    justify-self: end;
+  }
+
+  .order-form {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .order-form .order-user-field,
+  .order-form .order-restaurant-field {
+    grid-column: span 3;
+  }
+
+  .order-form .order-item-field {
+    grid-column: span 4;
+  }
+
+  .order-form .order-price-field,
+  .order-form .order-qty-field {
+    grid-column: span 1;
+  }
+
+  .reviews-view {
+    grid-template-columns: 1fr;
+  }
+
+  .review-form {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .review-form .review-user-field,
+  .review-form .review-restaurant-field {
+    grid-column: span 2;
+  }
+
+  .review-form .review-rating-field {
+    grid-column: span 1;
+  }
+}
+
 .inline-form {
   display: flex;
   flex-wrap: wrap;
@@ -221,6 +441,19 @@ button.primary {
   border-radius: 10px;
   padding: 0.4rem 0.6rem;
   background: #fff;
+}
+
+#order-items .order-item-empty {
+  justify-content: flex-start;
+  color: var(--muted);
+  font-style: italic;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+#order-items .remove-item-btn {
+  padding: 0.38rem 0.62rem;
+  border-radius: 10px;
+  font-size: 0.86rem;
 }
 
 .stack {
@@ -304,5 +537,54 @@ button.primary {
   .form-grid,
   .card-grid {
     grid-template-columns: 1fr;
+  }
+
+  .search-form .search-submit {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    width: 100%;
+  }
+
+  .search-form .search-limit-field {
+    max-width: none;
+  }
+
+  .order-form {
+    grid-template-columns: 1fr;
+  }
+
+  .order-form .order-user-field,
+  .order-form .order-restaurant-field,
+  .order-form .order-item-field,
+  .order-form .order-price-field,
+  .order-form .order-qty-field {
+    grid-column: 1 / -1;
+  }
+
+  .order-form .order-actions {
+    justify-content: stretch;
+    grid-column: 1 / -1;
+  }
+
+  .order-form .order-actions button {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .review-form {
+    grid-template-columns: 1fr;
+  }
+
+  .review-form .review-user-field,
+  .review-form .review-restaurant-field,
+  .review-form .review-rating-field,
+  .review-form .wide {
+    grid-column: 1 / -1;
+  }
+
+  .review-form .review-submit {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    width: 100%;
   }
 }

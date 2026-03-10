@@ -12,7 +12,11 @@ router.get(
   "/",
   asyncHandler(async (req, res) => {
     const usersCollection = getCollection("users");
-    const { filter, options } = buildFindConfig(req.query, { createdAt: -1 });
+    const { filter, options } = buildFindConfig(
+      req.query,
+      { createdAt: -1 },
+      { limitFallback: undefined, limitMax: null }
+    );
     const [data, total] = await Promise.all([
       usersCollection.find(filter, options).toArray(),
       usersCollection.countDocuments(filter)
@@ -23,7 +27,7 @@ router.get(
       meta: {
         total,
         skip: options.skip,
-        limit: options.limit
+        limit: options.limit ?? null
       }
     });
   })

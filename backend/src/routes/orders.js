@@ -284,8 +284,22 @@ router.patch(
       return res.status(400).json({ error: `status must be one of: ${VALID_STATUS.join(", ")}` });
     }
 
+    const orderId = toObjectId(req.params.id);
+    const current = await ordersCollection.findOne(
+      { _id: orderId },
+      { projection: { status: 1 } }
+    );
+
+    if (!current) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    if (current.status === "cancelled") {
+      return res.status(400).json({ error: "Cancelled orders cannot change status" });
+    }
+
     const order = await ordersCollection.findOneAndUpdate(
-      { _id: toObjectId(req.params.id) },
+      { _id: orderId },
       {
         $set: { status, updatedAt: new Date() },
         $push: { statusHistory: { status, at: new Date() } }
@@ -312,8 +326,16 @@ router.patch(
       return res.status(404).json({ error: "Order not found" });
     }
 
+    if (current.status === "dispatched") {
+      return res.status(400).json({ error: "Dispatched orders cannot be cancelled" });
+    }
+
     if (current.status === "delivered") {
       return res.status(400).json({ error: "Delivered orders cannot be cancelled" });
+    }
+
+    if (current.status === "cancelled") {
+      return res.status(400).json({ error: "Order is already cancelled" });
     }
 
     let order;
@@ -348,6 +370,8 @@ router.patch(
   asyncHandler(async (req, res) => {
     const ordersCollection = getCollection("orders");
     const update = {};
+    const orderId = toObjectId(req.params.id);
+    let current = null;
 
     if (req.body.items !== undefined) {
       const items = normalizeItems(req.body.items);
@@ -362,6 +386,20 @@ router.patch(
       if (!VALID_STATUS.includes(req.body.status)) {
         return res.status(400).json({ error: `status must be one of: ${VALID_STATUS.join(", ")}` });
       }
+
+      current = await ordersCollection.findOne(
+        { _id: orderId },
+        { projection: { status: 1 } }
+      );
+
+      if (!current) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      if (current.status === "cancelled" && req.body.status !== "cancelled") {
+        return res.status(400).json({ error: "Cancelled orders cannot change status" });
+      }
+
       update.status = req.body.status;
     }
 
@@ -379,7 +417,7 @@ router.patch(
     }
 
     const order = await ordersCollection.findOneAndUpdate(
-      { _id: toObjectId(req.params.id) },
+      { _id: orderId },
       updates,
       { returnDocument: "after" }
     );

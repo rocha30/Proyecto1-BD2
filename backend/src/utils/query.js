@@ -155,22 +155,40 @@ function parseSkip(queryParams) {
 }
 
 function parseLimit(queryParams, fallback = 20, max = 100) {
+  const hasLimitParam = queryParams.limit !== undefined && queryParams.limit !== null && String(queryParams.limit).trim() !== "";
   const limit = Number.parseInt(queryParams.limit, 10);
-  if (Number.isNaN(limit) || limit <= 0) {
+
+  if (!hasLimitParam || Number.isNaN(limit) || limit <= 0) {
     return fallback;
   }
+
+  if (typeof max !== "number" || !Number.isFinite(max) || max <= 0) {
+    return limit;
+  }
+
   return Math.min(limit, max);
 }
 
-function buildFindConfig(queryParams, defaultSort = { createdAt: -1 }) {
+function buildFindConfig(queryParams, defaultSort = { createdAt: -1 }, limitConfig = {}) {
+  const {
+    limitFallback = 20,
+    limitMax = 100
+  } = limitConfig;
+  const limit = parseLimit(queryParams, limitFallback, limitMax);
+
+  const options = {
+    sort: parseSort(queryParams, defaultSort),
+    skip: parseSkip(queryParams),
+    projection: parseProjection(queryParams)
+  };
+
+  if (limit !== undefined) {
+    options.limit = limit;
+  }
+
   return {
     filter: parseFilter(queryParams),
-    options: {
-      sort: parseSort(queryParams, defaultSort),
-      skip: parseSkip(queryParams),
-      limit: parseLimit(queryParams),
-      projection: parseProjection(queryParams)
-    }
+    options
   };
 }
 
