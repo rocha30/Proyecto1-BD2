@@ -1,4 +1,5 @@
 const express = require("express");
+const { ObjectId } = require("mongodb");
 
 const { getCollection } = require("../db");
 const { asyncHandler } = require("../utils/http");
@@ -105,6 +106,61 @@ router.delete(
     }
 
     res.status(204).send();
+  })
+);
+
+router.post(
+  "/many",
+  asyncHandler(async (req, res) => {
+    const usersCollection = getCollection("users");
+    const docs = req.body;
+    if (!Array.isArray(docs) || docs.length === 0) {
+      return res.status(400).json({ error: "Body must be a non-empty array of users" });
+    }
+    const prepared = docs.map((d) => ({
+      name: d.name,
+      email: d.email,
+      favoritos: Array.isArray(d.favoritos) ? d.favoritos : [],
+      telefono: d.telefono || null,
+      direccion: d.direccion || null,
+      createdAt: new Date()
+    }));
+    const result = await usersCollection.insertMany(prepared, { ordered: false });
+    res.status(201).json({ insertedCount: result.insertedCount, insertedIds: result.insertedIds });
+  })
+);
+
+router.post(
+  "/:id/favoritos",
+  asyncHandler(async (req, res) => {
+    const usersCollection = getCollection("users");
+    const restaurantId = new ObjectId(req.body.restaurantId);
+    const result = await usersCollection.findOneAndUpdate(
+      { _id: toObjectId(req.params.id) },
+      { $addToSet: { favoritos: restaurantId } },
+      { returnDocument: "after" }
+    );
+    if (!result) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.json(result);
+  })
+);
+
+router.delete(
+  "/:id/favoritos/:restaurantId",
+  asyncHandler(async (req, res) => {
+    const usersCollection = getCollection("users");
+    const restaurantId = new ObjectId(req.params.restaurantId);
+    const result = await usersCollection.findOneAndUpdate(
+      { _id: toObjectId(req.params.id) },
+      { $pull: { favoritos: restaurantId } },
+      { returnDocument: "after" }
+    );
+    if (!result) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.json(result);
   })
 );
 

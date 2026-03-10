@@ -5,6 +5,7 @@ const { getCollection } = require("../db");
 const { asyncHandler } = require("../utils/http");
 const { toObjectId } = require("../utils/objectId");
 const { buildFindConfig, parseFilter, parseLimit, parseSkip, parseSort } = require("../utils/query");
+const { runWithOptionalTransaction } = require("../utils/transaction");
 
 const router = express.Router();
 
@@ -37,20 +38,71 @@ function normalizeItems(rawItems) {
 
   return rawItems
     .map((item) => ({
-      name: item.name,
-      price: Number(item.price),
+      menuItemId: item.menuItemId ? new ObjectId(item.menuItemId) : undefined,
+      nombre: item.nombre ?? item.name,
+      precio: Number(item.precio ?? item.price),
       quantity: Number(item.quantity)
     }))
-    .filter((item) => item.name && Number.isFinite(item.price) && Number.isFinite(item.quantity) && item.quantity > 0);
+    .filter((item) => item.nombre && Number.isFinite(item.precio) && Number.isFinite(item.quantity) && item.quantity > 0);
 }
 
 function calculateTotal(items) {
   return Number(
     items
-      .reduce((total, item) => total + item.price * item.quantity, 0)
+      .reduce((total, item) => total + item.precio * item.quantity, 0)
       .toFixed(2)
   );
 }
+
+router.post(
+  "/many",
+  asyncHandler(async (req, res) => {
+    const ordersCollection = getCollection("orders");
+    const docs = req.body;
+    if (!Array.isArray(docs) || docs.length === 0) {
+      return res.status(400).json({ error: "Body must be a non-empty array of orders" });
+    }
+    const now = new Date();
+    const prepared = docs.map((d) => {
+      const items = normalizeItems(d.items);
+      const status = VALID_STATUS.includes(d.status) ? d.status : "pending";
+      return {
+        userId: toObjectId(d.userId, "userId"),
+        restaurantId: toObjectId(d.restaurantId, "restaurantId"),
+        items,
+        totalAmount: calculateTotal(items),
+        status,
+        statusHistory: [{ status, at: now }],
+        createdAt: now,
+        updatedAt: now
+      };
+    });
+    const result = await ordersCollection.insertMany(prepared, { ordered: false });
+    res.status(201).json({ insertedCount: result.insertedCount, insertedIds: result.insertedIds });
+  })
+);
+
+router.patch(
+  "/bulk-status",
+  asyncHandler(async (req, res) => {
+    const ordersCollection = getCollection("orders");
+    const { filter = {}, status } = req.body;
+    if (!status || !VALID_STATUS.includes(status)) {
+      return res.status(400).json({ error: `status must be one of: ${VALID_STATUS.join(", ")}` });
+    }
+    normalizeObjectIdFilter(filter, "userId");
+    normalizeObjectIdFilter(filter, "restaurantId");
+    const now = new Date();
+    const result = await ordersCollection.updateMany(
+      filter,
+      {
+        $set: { status, updatedAt: now },
+        $push: { statusHistory: { status, at: now } }
+      }
+    );
+    res.json({ matchedCount: result.matchedCount, modifiedCount: result.modifiedCount });
+  })
+);
 
 router.get(
   "/",
@@ -189,19 +241,36 @@ router.post(
 
     const status = VALID_STATUS.includes(req.body.status) ? req.body.status : "pending";
     const now = new Date();
-    const payload = {
-      userId,
-      restaurantId,
-      items,
-      totalAmount: calculateTotal(items),
-      status,
-      statusHistory: [{ status, at: now }],
-      createdAt: now,
-      updatedAt: now
-    };
 
-    const result = await ordersCollection.insertOne(payload);
-    const created = await ordersCollection.findOne({ _id: result.insertedId });
+    let createdId;
+    await runWithOptionalTransaction(async (session) => {
+      // Decrement inventory for each menu item
+      for (const item of items) {
+        if (item.menuItemId) {
+          await restaurantsCollection.updateOne(
+            { _id: restaurantId, "menu._id": item.menuItemId },
+            { $inc: { "menu.$.inventarioDisponible": -item.quantity } },
+            { session }
+          );
+        }
+      }
+
+      const payload = {
+        userId,
+        restaurantId,
+        items,
+        totalAmount: calculateTotal(items),
+        status,
+        statusHistory: [{ status, at: now }],
+        createdAt: now,
+        updatedAt: now
+      };
+
+      const result = await ordersCollection.insertOne(payload, { session });
+      createdId = result.insertedId;
+    });
+
+    const created = await ordersCollection.findOne({ _id: createdId });
     res.status(201).json(created);
   })
 );
@@ -235,6 +304,7 @@ router.patch(
 router.patch(
   "/:id/cancel",
   asyncHandler(async (req, res) => {
+    const restaurantsCollection = getCollection("Restaurant");
     const ordersCollection = getCollection("orders");
     const current = await ordersCollection.findOne({ _id: toObjectId(req.params.id) });
 
@@ -246,14 +316,28 @@ router.patch(
       return res.status(400).json({ error: "Delivered orders cannot be cancelled" });
     }
 
-    const order = await ordersCollection.findOneAndUpdate(
-      { _id: current._id },
-      {
-        $set: { status: "cancelled", updatedAt: new Date() },
-        $push: { statusHistory: { status: "cancelled", at: new Date() } }
-      },
-      { returnDocument: "after" }
-    );
+    let order;
+    await runWithOptionalTransaction(async (session) => {
+      // Restore inventory for each menu item
+      for (const item of current.items || []) {
+        if (item.menuItemId) {
+          await restaurantsCollection.updateOne(
+            { _id: current.restaurantId, "menu._id": item.menuItemId },
+            { $inc: { "menu.$.inventarioDisponible": item.quantity } },
+            { session }
+          );
+        }
+      }
+
+      order = await ordersCollection.findOneAndUpdate(
+        { _id: current._id },
+        {
+          $set: { status: "cancelled", updatedAt: new Date() },
+          $push: { statusHistory: { status: "cancelled", at: new Date() } }
+        },
+        { returnDocument: "after", session }
+      );
+    });
 
     res.json(order);
   })

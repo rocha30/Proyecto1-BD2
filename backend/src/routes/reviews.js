@@ -1,11 +1,12 @@
 const express = require("express");
 const { ObjectId } = require("mongodb");
 
-const { getCollection, startSession } = require("../db");
+const { getCollection } = require("../db");
 const { asyncHandler } = require("../utils/http");
 const { toObjectId } = require("../utils/objectId");
 const { buildFindConfig, parseFilter, parseLimit, parseSkip, parseSort } = require("../utils/query");
 const { refreshRestaurantRating } = require("../utils/restaurantStats");
+const { runWithOptionalTransaction } = require("../utils/transaction");
 
 const router = express.Router();
 
@@ -26,31 +27,6 @@ function normalizeObjectIdFilter(filter, field) {
     filter[field].$nin = filter[field].$nin.map((value) =>
       typeof value === "string" && ObjectId.isValid(value) ? new ObjectId(value) : value
     );
-  }
-}
-
-async function runWithOptionalTransaction(work) {
-  const session = startSession();
-  try {
-    session.startTransaction();
-    const result = await work(session);
-    await session.commitTransaction();
-    return result;
-  } catch (error) {
-    try {
-      await session.abortTransaction();
-    } catch (_abortError) {
-      // no-op
-    }
-
-    const unsupportedTransaction = /Transaction numbers are only allowed|replica set|mongos/i.test(error.message);
-    if (!unsupportedTransaction) {
-      throw error;
-    }
-
-    return work(undefined);
-  } finally {
-    await session.endSession();
   }
 }
 
@@ -128,6 +104,25 @@ router.get(
         lookupCollections: ["users", "Restaurant"]
       }
     });
+  })
+);
+
+router.delete(
+  "/bulk",
+  asyncHandler(async (req, res) => {
+    const reviewsCollection = getCollection("reviews");
+    const { restaurantId } = req.body;
+    if (!restaurantId) {
+      return res.status(400).json({ error: "restaurantId is required" });
+    }
+    const rid = toObjectId(restaurantId, "restaurantId");
+    let deletedCount;
+    await runWithOptionalTransaction(async (session) => {
+      const result = await reviewsCollection.deleteMany({ restaurantId: rid }, { session });
+      deletedCount = result.deletedCount;
+      await refreshRestaurantRating(rid, session);
+    });
+    res.json({ deletedCount });
   })
 );
 
