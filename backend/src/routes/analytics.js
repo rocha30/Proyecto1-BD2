@@ -144,9 +144,9 @@ router.get(
         { $unwind: "$items" },
         {
           $group: {
-            _id: "$items.name",
+            _id: "$items.nombre",
             totalQuantity: { $sum: "$items.quantity" },
-            totalRevenue: { $sum: { $multiply: ["$items.price", "$items.quantity"] } }
+            totalRevenue: { $sum: { $multiply: ["$items.precio", "$items.quantity"] } }
           }
         },
         { $sort: { totalQuantity: -1 } },
@@ -159,6 +159,115 @@ router.get(
       meta: {
         aggregation: true,
         metric: "top_dishes"
+      }
+    });
+  })
+);
+
+router.get(
+  "/distinct-food-types",
+  asyncHandler(async (_req, res) => {
+    const restaurantsCollection = getCollection("Restaurant");
+    const types = await restaurantsCollection.distinct("tipo_comida");
+    res.json({ data: types, meta: { count: types.length } });
+  })
+);
+
+router.get(
+  "/revenue-by-restaurant",
+  asyncHandler(async (req, res) => {
+    const ordersCollection = getCollection("orders");
+    const limit = parseLimit(req.query, 10, 50);
+
+    const data = await ordersCollection
+      .aggregate([
+        { $match: { status: { $ne: "cancelled" } } },
+        {
+          $group: {
+            _id: "$restaurantId",
+            totalRevenue: { $sum: "$totalAmount" },
+            totalOrders: { $sum: 1 }
+          }
+        },
+        { $sort: { totalRevenue: -1 } },
+        { $limit: limit },
+        {
+          $lookup: {
+            from: "Restaurant",
+            localField: "_id",
+            foreignField: "_id",
+            as: "restaurant"
+          }
+        },
+        { $unwind: { path: "$restaurant", preserveNullAndEmptyArrays: true } },
+        {
+          $project: {
+            _id: 1,
+            totalRevenue: 1,
+            totalOrders: 1,
+            restaurantName: "$restaurant.name",
+            tipo_comida: "$restaurant.tipo_comida"
+          }
+        }
+      ])
+      .toArray();
+
+    res.json({
+      data,
+      meta: {
+        aggregation: true,
+        metric: "revenue_by_restaurant",
+        lookupCollection: "Restaurant"
+      }
+    });
+  })
+);
+
+router.get(
+  "/user-spending",
+  asyncHandler(async (req, res) => {
+    const ordersCollection = getCollection("orders");
+    const limit = parseLimit(req.query, 10, 50);
+
+    const data = await ordersCollection
+      .aggregate([
+        { $match: { status: { $ne: "cancelled" } } },
+        {
+          $group: {
+            _id: "$userId",
+            totalSpent: { $sum: "$totalAmount" },
+            totalOrders: { $sum: 1 }
+          }
+        },
+        { $sort: { totalSpent: -1 } },
+        { $limit: limit },
+        {
+          $lookup: {
+            from: "users",
+            localField: "_id",
+            foreignField: "_id",
+            as: "user"
+          }
+        },
+        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+        {
+          $project: {
+            _id: 1,
+            totalSpent: 1,
+            totalOrders: 1,
+            userName: "$user.name",
+            userEmail: "$user.email"
+          }
+        }
+      ])
+      .toArray();
+
+    res.json({
+      data,
+      meta: {
+        aggregation: true,
+        metric: "user_spending",
+        lookupCollection: "users"
       }
     });
   })
