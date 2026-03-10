@@ -2,9 +2,24 @@
 db.Restaurant.deleteMany({});
 
 const tipos = ["Mexicana", "Italiana", "Japonesa", "Americana", "Vegana", "China", "India"];
+const categorias = ["Entrada", "Plato fuerte", "Postre", "Bebida", "Ensalada"];
+const platillos = ["Tacos", "Pizza", "Sushi", "Hamburguesa", "Ensalada Caesar", "Pad Thai", "Ramen", "Burrito", "Pasta", "Curry"];
 let bulk = [];
 
 for (let i = 0; i < 800; i++) {
+  const menuSize = Math.floor(Math.random() * 5) + 2;
+  const menu = [];
+  for (let j = 0; j < menuSize; j++) {
+    menu.push({
+      _id: new ObjectId(),
+      nombre: platillos[Math.floor(Math.random() * platillos.length)] + " " + j,
+      descripcion: "Delicioso platillo #" + j,
+      precio: Math.floor(Math.random() * 150) + 20,
+      categoria: categorias[Math.floor(Math.random() * categorias.length)],
+      inventarioDisponible: Math.floor(Math.random() * 100) + 10,
+      activo: true
+    });
+  }
   bulk.push({
     insertOne: {
       document: {
@@ -19,10 +34,7 @@ for (let i = 0; i < 800; i++) {
             19.0 + Math.random()
           ]
         },
-        menu: [
-          { name: "Item A", price: Math.floor(Math.random() * 100) },
-          { name: "Item B", price: Math.floor(Math.random() * 100) }
-        ],
+        menu: menu,
         createdAt: new Date()
       }
     }

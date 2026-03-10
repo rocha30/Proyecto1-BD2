@@ -2,35 +2,42 @@
 db.orders.deleteMany({});
 
 const userIds = db.users.find().map(u => u._id);
-const restaurantIds = db.Restaurant.find().map(r => r._id);
+const restaurants = db.Restaurant.find().toArray();
+
+if (userIds.length === 0 || restaurants.length === 0) {
+  print("❌ ERROR: Corre seed_users.js y seed_restaurants.js primero");
+  quit(1);
+}
 
 let bulk = [];
 
 for (let i = 0; i < 4000; i++) {
-
-  const price = Math.floor(Math.random() * 100) + 20;
+  const rest = restaurants[Math.floor(Math.random() * restaurants.length)];
+  const menuItem = rest.menu && rest.menu.length > 0
+    ? rest.menu[Math.floor(Math.random() * rest.menu.length)]
+    : { _id: new ObjectId(), nombre: "Item genérico", precio: 50 };
   const quantity = Math.floor(Math.random() * 3) + 1;
+  const status = ["pending", "confirmed", "delivered"][Math.floor(Math.random() * 3)];
+  const createdAt = new Date(2026, Math.floor(Math.random() * 6), Math.floor(Math.random() * 28) + 1);
 
   bulk.push({
     insertOne: {
       document: {
         userId: userIds[Math.floor(Math.random() * userIds.length)],
-        restaurantId: restaurantIds[Math.floor(Math.random() * restaurantIds.length)],
+        restaurantId: rest._id,
         items: [
           {
-            name: "Item A",
-            price: price,
+            menuItemId: menuItem._id,
+            nombre: menuItem.nombre,
+            precio: menuItem.precio,
             quantity: quantity
           }
         ],
-        totalAmount: price * quantity,
-        status: ["pending", "confirmed", "delivered"][Math.floor(Math.random() * 3)],
-        createdAt: new Date(
-          2026,
-          Math.floor(Math.random() * 6),
-          Math.floor(Math.random() * 28) + 1
-        ),
-        updatedAt: new Date()
+        totalAmount: menuItem.precio * quantity,
+        status: status,
+        statusHistory: [{ status: status, at: createdAt }],
+        createdAt: createdAt,
+        updatedAt: createdAt
       }
     }
   });
