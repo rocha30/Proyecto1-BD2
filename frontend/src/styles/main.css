@@ -482,6 +482,17 @@ button.primary {
   padding: 0.8rem;
 }
 
+.delete-review-btn {
+  margin-top: 0.55rem;
+  border: 1px solid rgba(220, 38, 38, 0.28);
+  color: #991b1b;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.delete-review-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
 .result-card h4 {
   margin-bottom: 0.2rem;
 }

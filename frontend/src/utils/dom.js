@@ -17,9 +17,14 @@ export function fillSelect(selectId, items, labelBuilder) {
   if (!select) {
     return;
   }
+  const previousValue = select.value;
   select.innerHTML = items
     .map((item) => `<option value="${item._id}">${escapeHtml(labelBuilder(item))}</option>`)
     .join("");
+
+  if (previousValue && items.some((item) => String(item._id) === String(previousValue))) {
+    select.value = previousValue;
+  }
 }
 
 export function buildQueryString(formElement) {

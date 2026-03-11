@@ -33,18 +33,65 @@ router.get(
 router.get(
   "/top-restaurants",
   asyncHandler(async (req, res) => {
-    const restaurantsCollection = getCollection("Restaurant");
+    const reviewsCollection = getCollection("reviews");
     const limit = parseLimit(req.query, 5, 20);
 
-    const data = await restaurantsCollection
+    const data = await reviewsCollection
       .aggregate([
-        { $match: { totalReviews: { $gt: 0 } } },
+        {
+          $addFields: {
+            restaurantIdRaw: { $ifNull: ["$restaurantId", "$restaurant_id"] }
+          }
+        },
+        {
+          $addFields: {
+            normalizedRestaurantId: {
+              $switch: {
+                branches: [
+                  {
+                    case: { $eq: [{ $type: "$restaurantIdRaw" }, "objectId"] },
+                    then: "$restaurantIdRaw"
+                  },
+                  {
+                    case: {
+                      $and: [
+                        { $eq: [{ $type: "$restaurantIdRaw" }, "string"] },
+                        { $regexMatch: { input: "$restaurantIdRaw", regex: "^[a-fA-F0-9]{24}$" } }
+                      ]
+                    },
+                    then: { $toObjectId: "$restaurantIdRaw" }
+                  }
+                ],
+                default: null
+              }
+            }
+          }
+        },
+        { $match: { normalizedRestaurantId: { $ne: null } } },
+        {
+          $group: {
+            _id: "$normalizedRestaurantId",
+            rating: { $avg: "$rating" },
+            totalReviews: { $sum: 1 }
+          }
+        },
         { $sort: { rating: -1, totalReviews: -1 } },
         { $limit: limit },
         {
+          $lookup: {
+            from: "Restaurant",
+            localField: "_id",
+            foreignField: "_id",
+            as: "restaurant"
+          }
+        },
+        { $unwind: { path: "$restaurant", preserveNullAndEmptyArrays: true } },
+        {
           $project: {
-            name: 1,
-            tipo_comida: 1,
+            _id: 0,
+            restaurantId: "$_id",
+            name: { $ifNull: ["$restaurant.name", "Unknown restaurant"] },
+            tipo_comida: { $ifNull: ["$restaurant.tipo_comida", "Unknown"] },
             rating: 1,
             totalReviews: 1
           }
