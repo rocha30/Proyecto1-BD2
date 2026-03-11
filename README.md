@@ -1,10 +1,65 @@
-# Proyecto BD2 - API + Frontend Vite
+# Proyecto1-BD2 - Tiendas to Casas
 
-Estructura separada por capas:
-- `backend/` para API y acceso a MongoDB.
-- `frontend/` para interfaz Vite (modular por features).
+Aplicacion full-stack para gestion de restaurantes, ordenes, resenas y analitica sobre MongoDB.
 
-## Estructura de carpetas
+## Video demo
+
+https://youtu.be/JYcfVTPGDu8
+
+## Contenido del proyecto
+
+- `backend/`: API REST con Express + MongoDB.
+- `frontend/`: cliente web con Vite + JavaScript modular.
+- `ETL/`: proceso ETL MongoDB -> PostgreSQL para analitica/BI.
+
+## Funcionalidades principales
+
+### Dashboard
+
+- Conteos generales (`users`, `restaurants`, `orders`, `reviews`).
+- Agregaciones:
+  - ordenes por estado
+  - top restaurantes por rating (incluye normalizacion de ids para datos legacy)
+  - top platos
+  - ventas mensuales
+
+### Buscar restaurantes
+
+- Filtro por texto (`q`) y categoria (`tipo_comida`).
+- Filtro por rating minimo (`rating_gte`).
+- Ordenamiento por `rating`, `name`, `createdAt`.
+- Orden asc/desc.
+- `limit` configurable.
+- Si `limit` va vacio, la API no aplica limite en esa consulta.
+
+### Crear orden
+
+- Seleccion de usuario y restaurante (listas completas).
+- Carga dinamica del menu del restaurante.
+- Precio automatico al seleccionar item.
+- Multiples items por orden.
+- Calculo de total en tiempo real.
+- Boton `Cancelar` para limpiar formulario y items.
+- Bloqueo del restaurante cuando ya hay items agregados.
+- Solo permite enviar si hay items en la lista.
+
+### Historial de ordenes (logica de negocio)
+
+- Cambio de estado de orden.
+- Cancelacion de orden.
+- Reglas:
+  - `dispatched` no se puede cancelar
+  - `delivered` no se puede cancelar
+  - `cancelled` no se puede cancelar ni cambiar estado
+
+### Resenas
+
+- Crear resena por usuario/restaurante.
+- Validacion de restaurante correcto al crear.
+- Listado reciente con datos enriquecidos (`$lookup`).
+- Boton para eliminar resena.
+
+## Arquitectura y estructura
 
 ```txt
 .
@@ -14,9 +69,10 @@ Estructura separada por capas:
 |  |  |- utils/
 |  |  |- app.js
 |  |  |- db.js
-|  |- .env.example
-|  |- package.json
 |  |- server.js
+|  |- reseed.js
+|  |- test_endpoints.js
+|  |- package.json
 |- frontend/
 |  |- src/
 |  |  |- api/
@@ -26,110 +82,197 @@ Estructura separada por capas:
 |  |  |- utils/
 |  |  |- main.js
 |  |- index.html
-|  |- package.json
 |  |- vite.config.js
-|- init.js
-|- seed_users.js
-|- seed_restaurants.js
-|- seed_orders.js
-|- seed_reviews.js
+|  |- package.json
+|- ETL/
+|  |- etl.py
+|  |- config.json
+|  |- requirements.txt
 |- package.json
 ```
 
-## Setup
+## Tecnologias
 
-1. Instalar backend:
-```bash
-npm install --prefix backend
-```
+- Backend: Node.js, Express, MongoDB Driver, dotenv, cors
+- Frontend: Vite, JavaScript modular, CSS
+- ETL: Python, MongoDB, PostgreSQL
 
-2. Instalar frontend:
-```bash
-npm install --prefix frontend
-```
+## Requisitos
 
-3. Crear `backend/.env` desde `backend/.env.example`:
+- Node.js 18+
+- npm 9+
+- MongoDB (Atlas o local)
+- Python 3.8+ (solo para ETL)
+- PostgreSQL (solo para ETL)
+
+## Configuracion
+
+Crear archivo `backend/.env`:
+
 ```env
-MONGODB_URI=...
-DB_NAME=restaurant_management
+MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/
+DB_NAME=Pr1
 PORT=3000
+CORS_ORIGIN=http://localhost:5173
 ```
 
-4. Ejecutar backend:
+En frontend, opcionalmente puedes definir `VITE_API_BASE` en `frontend/.env`.
+Si no se define, se usa el mismo host del frontend.
+
+## Instalacion
+
+Desde la raiz:
+
+```bash
+npm run install:backend
+npm run install:frontend
+```
+
+## Ejecucion en desarrollo
+
+Terminal 1 (backend):
+
 ```bash
 npm run dev:backend
 ```
 
-5. En otra terminal, ejecutar frontend Vite:
+Terminal 2 (frontend):
+
 ```bash
 npm run dev:frontend
 ```
 
-## URLs
+## URLs locales
 
-- Frontend (Vite): `http://localhost:5173`
+- Frontend: `http://localhost:5173`
 - API: `http://localhost:3000`
-- Healthcheck API: `http://localhost:3000/api/health`
+- Healthcheck: `http://localhost:3000/api/health`
 
-## Frontend (Vite) y organizacion
+## Seed de datos
 
-El frontend usa Vite + JavaScript modular:
-- `src/api/`: cliente HTTP.
-- `src/features/`: logica por vista (`dashboard`, `orders`, `history`, `reviews`, `restaurants`, `tabs`).
-- `src/state/`: estado compartido de la app.
-- `src/utils/`: formato, helpers de DOM.
-- `src/styles/`: estilos globales.
+Para poblar la base con datos de prueba e indices:
 
-Esto evita un `app.js` monolitico y mantiene separacion clara por responsabilidad.
+```bash
+cd backend
+node reseed.js
+```
 
-## Endpoints principales
+## Pruebas de endpoints
 
-### Usuarios
-- `GET /api/users`
-- `GET /api/users/:id`
-- `POST /api/users`
-- `PATCH /api/users/:id`
-- `DELETE /api/users/:id`
+Con el backend corriendo:
 
-### Restaurantes
-- `GET /api/restaurants`
-- `GET /api/restaurants/:id`
-- `POST /api/restaurants`
-- `PATCH /api/restaurants/:id`
-- `DELETE /api/restaurants/:id`
+```bash
+cd backend
+node test_endpoints.js
+```
 
-### Ordenes
-- `GET /api/orders`
-- `GET /api/orders/:id`
-- `POST /api/orders`
-- `PATCH /api/orders/:id`
-- `DELETE /api/orders/:id`
-- `PATCH /api/orders/:id/cancel`
-- `PATCH /api/orders/:id/status`
-- `GET /api/orders/:id/status-history`
-- `GET /api/orders/enriched` (`$lookup`)
+## Endpoints API (resumen)
 
-### Reviews
-- `GET /api/reviews`
-- `GET /api/reviews/:id`
-- `POST /api/reviews`
-- `PATCH /api/reviews/:id`
-- `DELETE /api/reviews/:id`
-- `GET /api/reviews/enriched` (`$lookup`)
+Base URL: `http://localhost:3000/api`
 
-### Analytics
-- `GET /api/analytics/overview`
-- `GET /api/analytics/top-restaurants`
-- `GET /api/analytics/orders-by-status`
-- `GET /api/analytics/monthly-sales`
-- `GET /api/analytics/top-dishes`
+### Users (`/users`)
 
-## Query params soportados
+- `GET /`
+- `GET /:id`
+- `POST /`
+- `POST /many`
+- `PATCH /:id`
+- `POST /:id/favoritos`
+- `DELETE /:id/favoritos/:restaurantId`
+- `DELETE /:id`
 
-En listados `GET /api/...`:
+### Restaurants (`/restaurants`)
+
+- `GET /`
+- `GET /:id`
+- `POST /`
+- `PATCH /:id`
+- `DELETE /:id`
+- `POST /:id/menu`
+- `PATCH /:id/menu/:menuItemId`
+- `DELETE /:id/menu/:menuItemId`
+
+### Orders (`/orders`)
+
+- `GET /`
+- `GET /enriched`
+- `GET /:id`
+- `GET /:id/status-history`
+- `POST /`
+- `POST /many`
+- `PATCH /bulk-status`
+- `PATCH /:id/status`
+- `PATCH /:id/cancel`
+- `PATCH /:id`
+- `DELETE /:id`
+
+### Reviews (`/reviews`)
+
+- `GET /`
+- `GET /enriched`
+- `GET /:id`
+- `POST /`
+- `PATCH /:id`
+- `DELETE /bulk`
+- `DELETE /:id`
+
+### Analytics (`/analytics`)
+
+- `GET /overview`
+- `GET /top-restaurants`
+- `GET /orders-by-status`
+- `GET /monthly-sales`
+- `GET /top-dishes`
+- `GET /distinct-food-types`
+- `GET /revenue-by-restaurant`
+- `GET /user-spending`
+
+## Query params soportados en listados
+
 - `sort`, `order`
 - `skip`, `limit`
 - `fields` o `projection`
 - `filter` (JSON)
-- filtros por campo (`status=pending`)
-- operadores por sufijo: `_gte`, `_lte`, `_gt`, `_lt`, `_ne`, `_in`, `_nin`
+- filtros directos por campo (`status=pending`)
+- operadores: `_gte`, `_lte`, `_gt`, `_lt`, `_ne`, `_in`, `_nin`
+
+## ETL (MongoDB -> PostgreSQL)
+
+Ubicacion: `ETL/`
+
+Pasos:
+
+1. Instalar dependencias:
+
+```bash
+cd ETL
+pip install -r requirements.txt
+```
+
+2. Configurar `ETL/config.json` (MongoDB y PostgreSQL).
+3. Ejecutar:
+
+```bash
+python etl.py
+```
+
+El ETL:
+
+- extrae datos con pipelines de agregacion desde MongoDB
+- exporta CSV en `ETL/output/`
+- crea/carga tablas en PostgreSQL para consumo en Power BI
+
+## Scripts utiles (raiz)
+
+- `npm run install:backend`
+- `npm run install:frontend`
+- `npm run dev:backend`
+- `npm run dev:frontend`
+- `npm run build:frontend`
+- `npm run preview:frontend`
+
+## Notas
+
+- Si cambias rutas de backend, reinicia el servidor.
+- Para consultas grandes de restaurantes, deja `limit` vacio.
+- Si el frontend no refleja cambios, limpia cache del navegador y recarga.
